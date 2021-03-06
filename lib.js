@@ -121,7 +121,7 @@ class Component extends LifeHooks {
         break
       }
     }
-    Logger.log("[ShalowEqual][isEqual]: ", isEqual)
+    Logger.info("[ShalowEqual][isEqual]: ", isEqual)
     return isEqual
   }
 
