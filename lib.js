@@ -13,7 +13,6 @@ function h(tag, props = {}, children = []) {
 }
 
 function Reactive(defaultValue) {
-  // debugger
   let value = defaultValue || {}
   return new Proxy(value, {
     get: (targ, prop) => {
