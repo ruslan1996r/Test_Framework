@@ -12,29 +12,6 @@ function h(tag, props = {}, children = []) {
   }
 }
 
-function Reactive(defaultValue) {
-  // debugger
-  let value = defaultValue || {}
-  return new Proxy(value, {
-    get: (targ, prop) => {
-      // console.log(`Getting prop ${prop}`);
-      return targ[prop];
-    },
-    set: (target, property, value, receiver) => {
-      // console.log("THIS: ", context, this)
-      // console.log("target", target)
-      // console.log("property", property)
-      // console.log("value", value)
-      // console.log("receiver", receiver)
-      // return true
-      target[property] = value
-
-      this.update({})
-      return target
-    }
-  })
-}
-
 class LifeHooks {
   beforeMount() {
     Logger.logCall("beforeMount", this.constructor.name)
@@ -43,7 +20,7 @@ class LifeHooks {
     Logger.logCall('mounted', this.constructor.name)
   }
   beforeUpdate(oldNode) {
-    Logger.logCall("beforeUpdated", this.constructor.name)
+    Logger.logCall("beforeUpdated", this.constructor.name) //oldNode
   }
   updated() {
     Logger.logCall("updated", this.constructor.name)
@@ -57,10 +34,10 @@ class LifeHooks {
   catched(error) {
     Logger.logCall("catched", error)
   }
-  update = new Proxy(this.updateEl, {
+  _update = new Proxy(this.updateEl, {
     apply: (target, ctx, args) => {
       try {
-        const oldNode = args.oldNode || this.$node
+        const oldNode = args.oldNode || this._$node
         this.beforeUpdate(oldNode)
         target.apply(ctx, args)
         this.updated()
@@ -69,7 +46,7 @@ class LifeHooks {
       }
     }
   })
-  mount = new Proxy(this.createEl, {
+  _append = new Proxy(this.createEl, {
     apply: (target, ctx, args) => {
       try {
         this.beforeMount()
@@ -80,10 +57,10 @@ class LifeHooks {
       }
     }
   })
-  destroy = new Proxy(this.removeEl, {
+  _destroy = new Proxy(this.removeEl, {
     apply: (target, ctx, args) => {
       try {
-        this.beforeDestroy(this.$node)
+        this.beforeDestroy(this._$node)
         target.apply(ctx, args)
         this.destroyed()
       } catch (e) {
@@ -96,9 +73,9 @@ class LifeHooks {
 class Component extends LifeHooks {
   constructor(props) {
     super(props)
-    this.$node = null
-    this.props = props
+    this._$node = null
     this.state = {}
+    this.props = props
   }
   _compareByKeys(oldList, newList) {
     try {
@@ -155,21 +132,31 @@ class Component extends LifeHooks {
     return isEqual
   }
 
-  // Используются единожды, как метод класса
+  // Используется единожды, как метод класса
+  removeEl(node = this._$node) {
+    this._removeEl(node)
+  }
+
+  // Используется для всех дом-узлов
+  _removeEl(node = this._$node) {
+    try {
+      // НУЖНО БУДЕТ ЧИСТИТЬ СВОЕГО РОДИТЕЛЯ, ЕСЛИ УДАЛЁН БЫЛ КОМПОНЕНТ
+      Logger.log("UNMOUNT_element: ", node)
+      node.$el.remove()
+      if (this._$node !== null) {
+        this._$node = null
+      }
+    } catch (e) {
+      console.error('ERR: ', e)
+    }
+  }
+
+  // Используется единожды, как метод класса
   createEl({ node = this.render(), container, parent, mountMethod = 'append' }) {
-    if (this.$node === null) {
-      this.$node = node
+    if (this._$node === null) {
+      this._$node = node
     }
     this._createEl({ node, container, parent, mountMethod })
-  }
-
-  updateEl({ oldNode = this.$node, newNode = this.render() }) {
-    this._updateEl({ oldNode, newNode })
-    this.$node = newNode
-  }
-
-  removeEl(node = this.$node) {
-    this._removeEl(node)
   }
 
   // Используется для всех дом-узлов
@@ -185,8 +172,9 @@ class Component extends LifeHooks {
       return
     }
     try {
-      if (node.$node === null) {
-        node.mount({ container, parent })
+      if (node._$node === null) {
+        node._append({ container, parent })
+        // return node._$node
       } else {
         const element = document.createElement(node.tag)
         Logger.log("MOUNT_element: ", element)
@@ -238,20 +226,26 @@ class Component extends LifeHooks {
     }
   }
 
+  // Используется единожды, как метод класса
+  updateEl({ oldNode = this._$node, newNode = this.render() }) {
+    this._updateEl({ oldNode, newNode })
+    this._$node = newNode //oldNode//newNode// newNode
+  }
+
   // Используется для всех дом-узлов и компонентов
   _updateEl({ oldNode, newNode, parent }) {
     try {
-      if (oldNode.$node || oldNode.$node === null) {
+      if (oldNode._$node || oldNode._$node === null) {
         oldNode.updateEl({ container: parent.$el, newNode, parent })
         return
       }
       if (oldNode.tag !== newNode.tag) {
         if (
-          newNode.$node === null &&
+          newNode._$node === null &&
           this._shalowEqual({ oldKeys: this.props, newKeys: newNode.props })
         ) {
           // Если пропсы в новом компоненте равны старым, просто запишет старую ноду в качестве новой (оставит всё как есть)
-          newNode.$node = oldNode
+          newNode._$node = oldNode
           return
         }
         this._createEl({ node: newNode, container: oldNode.$el.parentNode, parent })
@@ -295,6 +289,9 @@ class Component extends LifeHooks {
             })
             Logger.log("UPDATE_element(array): ", newNode)
           } else {
+            // if (!oldNode.children || !newNode.children) {
+            //   debugger
+            // }
             const maxChildren = Math.max(oldNode.children.length, newNode.children.length)
             let nodes
             if (oldNode.keys && Object.keys(oldNode.keys).length) {
@@ -369,18 +366,28 @@ class Component extends LifeHooks {
       console.error('ERR: ', e)
     }
   }
-
-  // Используется для всех дом-узлов
-  _removeEl(node = this.$node) {
-    try {
-      // НУЖНО БУДЕТ ЧИСТИТЬ СВОЕГО РОДИТЕЛЯ, ЕСЛИ УДАЛЁН БЫЛ КОМПОНЕНТ
-      Logger.log("UNMOUNT_element: ", node)
-      node.$el.remove()
-      if (this.$node !== null) {
-        this.$node = null
-      }
-    } catch (e) {
-      console.error('ERR: ', e)
-    }
-  }
 }
+
+// class Component {
+//   hello = "hello, gena!"
+// }
+
+
+// const ComponentProxy = new Proxy(Component, {
+//   construct(target, args) {
+//     return new Proxy(new target(...args), {
+//       get(targ, prop) {
+//         console.log(`Getting prop ${prop}`);
+//         return targ[prop];
+//       },
+//       set(target, property, value, receiver) {
+//         console.log("target", target)
+//         console.log("property", property)
+//         console.log("value", value)
+//         console.log("receiver", receiver)
+//       }
+//     })
+//   }
+// })
+
+// const comp = new ComponentProxy("hello!")
