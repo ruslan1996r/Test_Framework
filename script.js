@@ -1,21 +1,47 @@
 class Child extends Component {
   constructor(props) {
     super(props)
+
+    this.hello = 'awdawd123123'
+    this.testTitle = 'test_11222333'
   }
-  // mounted() {
-  //   console.log("beforeMount", this._$node)
-  // }
+  mounted() {
+    asyncSet().then(get => {
+      const testBtn = get("test")
+      const testClick = get('btn')
+
+      testBtn.onclick = this.test //.bind(this)
+      testClick.onclick = this.testClick //.bind(this)
+    })
+  }
   // updated() {
   //   console.log("update", this._$node)
   // }
   // beforeUpdate(oldNode) {
   //   console.log("beforeUpdate", this._$node, "oldNode", oldNode)
   // }
+  test = () => {
+    console.log("test", this.testTitle)
+  }
+
+  testClick = () => {
+    console.log("testClick", this.hello)
+  }
+
   render() {
     const { title } = this.props
-    return (h('div', { style: "color: #b019e1; font-size: 40px;" }, title))
+    return (
+      h('div', {}, [
+        h('div', { style: "color: #b019e1; font-size: 40px;" }, title),
+        h('button', { id: "test" }, 'Child Click'),
+        h('button', { id: "btn" }, 'press me'),
+        h('hr')
+      ])
+    )
   }
 }
+
+
 
 // const _child = new Child({ title: "privet from props" })
 
@@ -171,77 +197,40 @@ class Test extends Component {
 }
 
 const _this = new Test()
-// _this.createEl({ container: document.getElementById('app') })
-// ----------------------------------------------------------------------------------------------------------------
 
-// const log = text => `Log: ${text}`;
-// class Testing {
-//   test(arg) {
-//     console.log("RENDER FUNCTION", arg)
-//   }
-//   beforeMount() {
-//     console.log("beforeMount...")
-//   }
-//   mounted() {
-//     console.log("mounted...")
-//   }
 
-//   // mountProxy - по идее, это наш createEl (не приватный, а уже публичная функция в class Component -> lib) 
-//   // mountProxy - маунтед, а beforeMount и mounted - наши "прослушки" через прокси
-//   // По такой же логике переписать _update и unmount
-//   mountProxy = new Proxy(this.test, {
-//     apply: (target, ctx, args) => {
-//       this.beforeMount()
-//       target.apply(ctx, args)
-//       this.mounted()
-//     }
-//   })
-// }
-// class Comp extends Testing {
-//   constructor() {
-//     super()
-//   }
-//   doSmt(arg) {
-//     console.log("dosmt", arg)
-//   }
-//   beforeMount() {
-//     this.doSmt("beforeMount my mount")
-//   }
-//   mounted() {
-//     this.doSmt("mounted my mount element")
-//   }
-// }
-// // const t = new Testing()
-// const c = new Comp()
+// render() {
+//   return (
+//     h('div', {}, [
+//       h('h1', { style: 'color: green' }, 'hello'),
+//       h("div", { test: "RENDER_CHILD123123" }, [new Child({ title: this.titleeee })]),
+//       // h("div", { test: "RENDER_CHILD123123" }, [_child]),
+//       h("button", { onclick: "changeTitle" }, 'change child title'),
+//       h('button', { onclick: "getUsers" }, 'Get users btn'),
+//       h('button', { onclick: "addUser" }, 'Add user btn'),
+//       h('button', { onclick: "allUsers" }, "Get all users"),
+//       h('button', { onclick: "changeEdit" }, this.edit ? "NON" : "EDIT"),
+//       h('br'),
+//       h("button", { onclick: "insert" }, 'ON FIRST POS'),
+//       h("button", { onclick: "getComments" }, "GET_COMMENTS"),
+//       h("button", { onclick: "pushComment" }, "pushComment"),
+//       h("div", {}, [
+//         h('button', { onclick: "makeError", style: "color: red; font-size: 25px" }, 'makeError'),
+//         h("div", {}, [...this.wrongArray.map(e => h('div', {}, e))])
+//       ]),
+//       h("button", { style: `color:red; font-size: 40px`, onclick: 'getContext' }, "TEST"),
 
-// function MOUNT() {
-//   const app = document.getElementById('app')
-//   const el = document.createElement("div")
-//   el.textContent = 'MOUNTED_ELEMENT'
-//   app.append(el)
-//   console.log("Element appended!")
+//       this.showHello && h('div', {}, "HELLO!!!!"),
+//       h('ol', {}, this.renderList()),
+//       this.edit ? h('h3', { style: "color: blue" }, "EDIT") : h('h3', { style: "color: red" }, "NON_EDIT"),
+//       h("h2", {}, "Comments"),
+//       h('ul', {}, [...this.comments.map((el, i) => (
+//         h('li', { key: el.id }, [
+//           h('div', {}, el.name),
+//           h('span', { style: "color: green" }, el.email),
+//           h('small', {}, el.body)
+//         ])
+//       ))])
+//     ])
+//   )
 // }
-// function beforeMount() {
-//   console.log("beforeMount...")
-// }
-// function mounted() {
-//   console.log("mounted...")
-// }
-
-// const p = new Proxy(MOUNT, {
-//   apply(target, ctx, args) {
-//     beforeMount()
-//     target.apply(ctx, args)
-//     mounted()
-//   }
-// })
-//target - функция log
-//ctx - контекст
-//args - все параметры, которые передаются в функцию (тут text)
-// const fp = new Proxy(log, {
-//   apply(target, ctx, args) {
-//     console.log("Calling fn...", target, ctx, args);
-//     return target.apply(ctx, args).toUpperCase(); //target - сама функция (тут log)
-//   }
-// });
-// console.log(fp("text"));

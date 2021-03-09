@@ -1,3 +1,9 @@
+function asyncSet() {
+  return new Promise(res => {
+    res(id => document.getElementById(id))
+  })
+}
+
 function h(tag, props = {}, children = []) {
   return {
     tag,
@@ -121,7 +127,7 @@ class Component extends LifeHooks {
         break
       }
     }
-    Logger.log("[ShalowEqual][isEqual]: ", isEqual)
+    Logger.info("[ShalowEqual][isEqual]: ", isEqual)
     return isEqual
   }
 
@@ -147,7 +153,6 @@ class Component extends LifeHooks {
   // Используется единожды, как метод класса
   createEl({ node = this.render(), container, parent, mountMethod = 'append' }) {
     if (this._$node === null) {
-      // debugger
       this._$node = node
     }
     this._createEl({ node, container, parent, mountMethod })
@@ -188,6 +193,20 @@ class Component extends LifeHooks {
             console.error(`Duplicate key ${key}. Use only unique key values `)
           }
           // Запишет аттрибут. Установит все пропсы как ключи (айди, классы и тд)
+          // if (key.startsWith('on')) {
+          //   // node.props[key]
+          //   // this
+          //   // debugger
+          //   // debugger
+          //   element[key] = this[node.props[key]].bind(this) //.bind(this) //.call(this, 'privet') //.bind(this)
+          //   // console.log("this[node.props[key]]", this[node.props[key]])
+          //   // element.onclick = () => console.log('test')//this.her
+          // } else {
+          //   element.setAttribute(key, node.props[key])
+          // }
+          // else {
+
+          // }
           element.setAttribute(key, node.props[key])
         }
         if (typeof node.children === 'string') {
@@ -243,7 +262,17 @@ class Component extends LifeHooks {
         for (const key in newNode.props) {
           newNode.$el.setAttribute(key, newNode.props[key])
         }
-
+        // ------------------------------------------------------
+        // for (const key in newNode.props) {
+        //   if (key.startsWith('on')) {
+        //     // console.log("TEST", this[newNode.props[key]])
+        //     // debugger
+        //     newNode.$el[key] = this.changeTitle.bind(this)//this[newNode.props[key]].bind(this)
+        //   } else {
+        //     newNode.$el.setAttribute(key, newNode.props[key])
+        //   }
+        // }
+        // ------------------------------------------------------
         if (typeof newNode.children === 'string') {
           newNode.$el.textContent = newNode.children
           Logger.log("UPDATE_element(by string): ", newNode)
@@ -259,9 +288,9 @@ class Component extends LifeHooks {
             })
             Logger.log("UPDATE_element(array): ", newNode)
           } else {
-            if (!oldNode.children || !newNode.children) {
-              debugger
-            }
+            // if (!oldNode.children || !newNode.children) {
+            //   debugger
+            // }
             const maxChildren = Math.max(oldNode.children.length, newNode.children.length)
             let nodes
             if (oldNode.keys && Object.keys(oldNode.keys).length) {
